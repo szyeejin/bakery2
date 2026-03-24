@@ -156,3 +156,55 @@ INSERT INTO product_sku (spu_id, spec_name, price) VALUES
                                                        (1, '6寸 (适合2-3人)', 168.00),
                                                        (1, '8寸 (适合4-6人)', 228.00),
                                                        (2, '切件', 38.00);
+
+
+USE bakery;
+
+-- ========== 1. 购物车表 ==========
+DROP TABLE IF EXISTS shopping_cart;
+CREATE TABLE shopping_cart (
+                               id          BIGINT PRIMARY KEY AUTO_INCREMENT,
+                               user_id     BIGINT   NOT NULL COMMENT '用户ID',
+                               spu_id      BIGINT   NOT NULL COMMENT '商品SPU_ID',
+                               sku_id      BIGINT   NOT NULL COMMENT '规格SKU_ID',
+                               quantity    INT      DEFAULT 1 COMMENT '购买数量',
+                               create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+                               INDEX idx_user (user_id)
+) COMMENT '购物车表';
+
+-- ========== 2. 订单主表 ==========
+DROP TABLE IF EXISTS order_main;
+CREATE TABLE order_main (
+                            id               BIGINT PRIMARY KEY AUTO_INCREMENT,
+                            order_no         VARCHAR(50)   NOT NULL UNIQUE COMMENT '订单号(如: ORD202405...)',
+                            user_id          BIGINT        NOT NULL COMMENT '下单用户ID',
+                            total_amount     DECIMAL(10,2) NOT NULL COMMENT '订单总金额',
+                            pay_amount       DECIMAL(10,2) NOT NULL COMMENT '实际支付金额',
+                            status           TINYINT       DEFAULT 0 COMMENT '0待支付 1已支付/待接单 2制作中 3待配送/待自提 4配送中 5已完成 6已取消',
+                            delivery_type    TINYINT       NOT NULL COMMENT '1到店自提 2同城配送',
+                            receiver_name    VARCHAR(50)   DEFAULT '' COMMENT '收货人/提货人姓名',
+                            receiver_phone   VARCHAR(20)   DEFAULT '' COMMENT '联系电话',
+                            receiver_address VARCHAR(200)  DEFAULT '' COMMENT '配送详细地址(自提为空)',
+                            blessing_text    VARCHAR(100)  DEFAULT '' COMMENT '蛋糕定制祝福语',
+                            remark           VARCHAR(200)  DEFAULT '' COMMENT '顾客备注',
+                            pay_time         DATETIME      DEFAULT NULL COMMENT '支付时间',
+                            create_time      DATETIME      DEFAULT CURRENT_TIMESTAMP,
+                            update_time      DATETIME      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                            INDEX idx_user (user_id),
+                            INDEX idx_order_no (order_no)
+) COMMENT '订单主表';
+
+-- ========== 3. 订单明细表 (子订单) ==========
+DROP TABLE IF EXISTS order_item;
+CREATE TABLE order_item (
+                            id          BIGINT PRIMARY KEY AUTO_INCREMENT,
+                            order_id    BIGINT        NOT NULL COMMENT '归属订单ID',
+                            spu_id      BIGINT        NOT NULL COMMENT '商品SPU_ID',
+                            sku_id      BIGINT        NOT NULL COMMENT '规格SKU_ID',
+                            spu_name    VARCHAR(100)  NOT NULL COMMENT '商品名称(快照)',
+                            sku_name    VARCHAR(50)   NOT NULL COMMENT '规格名称(快照)',
+                            price       DECIMAL(10,2) NOT NULL COMMENT '购买时单价(快照)',
+                            quantity    INT           NOT NULL COMMENT '购买数量',
+                            create_time DATETIME      DEFAULT CURRENT_TIMESTAMP,
+                            INDEX idx_order (order_id)
+) COMMENT '订单明细表';
